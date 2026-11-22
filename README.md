@@ -1,2 +1,2 @@
-# GHS-Umeed-Ali-Junejo-School-Portal
+# GBELS-FAIZ-ILLAHI-School-Portal
 School Portal
