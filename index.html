@@ -165,34 +165,11 @@ h3.sec{display:flex;align-items:center;gap:10px}h3.sec::after{content:"";flex:1;
 .lg-r form{background:var(--card);padding:30px;border-radius:22px;border:1px solid var(--line);box-shadow:0 20px 56px #06452f26}.lg-l>img{object-position:center 40%}.lg-r h2{font-size:30px}
 .ac i{box-shadow:0 0 0 3px #2F6FA31f}.lk{color:var(--blue)}
 @media print{.dd,.srch,.clk{display:none!important}}
-
-/* Timetable-only layout fixes: fit the full timetable without horizontal scrolling */
-.tt-note{color:var(--mute);font-size:13px;line-height:1.5;margin:10px 0}
-.tt-wrap{width:100%;max-width:100%;overflow:visible!important;border:1px solid var(--line);border-radius:14px;background:var(--card)}
-.tt-table{width:100%!important;min-width:0!important;table-layout:fixed;border-collapse:collapse}
-.tt-table th,.tt-table td{min-width:0;padding:7px 4px!important;text-align:center;white-space:normal!important;overflow-wrap:anywhere;word-break:normal;line-height:1.25}
-.tt-table th{font-size:11px;letter-spacing:0;text-transform:none}
-.tt-table td{font-size:12px}
-.tt-table .tt-class{width:7%;font-weight:700}
-.tt-table .tt-day{width:8%;font-weight:600}
-.tt-table .tt-break,.tt-table .tt-break-head{background:var(--sand);color:#034b2c;font-weight:700}
-.tt-time-edit{display:flex;flex-direction:column;gap:3px;margin-top:4px}
-.tt-time-edit input{width:100%!important;min-width:0!important;padding:3px 1px!important;font-size:10px!important;min-height:28px!important}
-.tt-table td[contenteditable="true"]{cursor:text;outline-offset:-2px}
-.tt-table td[contenteditable="true"]:focus{outline:2px solid var(--blue);background:var(--card)}
-@media(max-width:820px){
- .tt-wrap{overflow:visible!important}
- .tt-table,.tt-table tbody{display:block;width:100%!important}
- .tt-table thead{display:none}
- .tt-table tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:8px;margin:0;border-bottom:1px solid var(--line)}
- .tt-table td{display:flex;flex-direction:column;justify-content:flex-start;min-height:62px;padding:6px 4px!important;border:1px solid var(--line);border-radius:8px;text-align:center;font-size:11px;overflow-wrap:anywhere}
- .tt-table td::before{content:attr(data-period);display:block;font-size:9px;font-weight:700;color:var(--mute);margin-bottom:4px}
- .tt-table .tt-class,.tt-table .tt-day{grid-column:span 2;min-height:38px;justify-content:center;background:var(--bg)}
- .tt-table .tt-class::before,.tt-table .tt-day::before{margin:0 0 2px}
- .tt-table .tt-break{background:var(--sand)!important;color:#034b2c}
- .tt-table th,.tt-table td{white-space:normal!important}
-}
-
+.tt{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12.5px}.tt th,.tt td{border:1px solid var(--line);padding:6px 5px;text-align:center;vertical-align:middle;overflow-wrap:anywhere;line-height:1.3;text-transform:none;letter-spacing:0;font-size:12.5px}.tt thead th{background:#075B3B;color:#fff;font-size:13px}
+.tt .prh{background:#E4F1E8;color:#06452F;width:13%}.tt .brh,.tt .br.sb{background:#FFF3C4;color:#06452F}.tt .br.lb{background:#F6D98A;color:#06452F}.tt .e{background:#f3f3ee}.tt td i{color:var(--mute)}.tt small{color:var(--mute);font-size:11px}.tt td select{width:100%;font-size:11.5px;padding:3px;margin-top:2px;min-height:0}
+[data-theme="dark"] .tt thead th{background:#0B7951}[data-theme="dark"] .tt .prh{background:#1d3a2e;color:#e6f2ea}[data-theme="dark"] .tt .brh,[data-theme="dark"] .tt .br.sb{background:#4a3f17;color:#f4e7b8}[data-theme="dark"] .tt .br.lb{background:#5e4d12;color:#f4e7b8}[data-theme="dark"] .tt .e{background:#14211c}
+.ttbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}.ttbar .b{display:inline-flex;gap:6px;align-items:center}.tth{text-align:center;margin:4px 0 12px}.tth h2{margin:0 0 4px;color:var(--brick)}
+@media print{@page ttpage{size:A4 landscape;margin:10mm}body.ttp aside,body.ttp header,body.ttp .noprint,body.ttp #bnav,body.ttp .who{display:none!important}body.ttp #ttprint{page:ttpage;-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#000;background:#fff;box-shadow:none;border:0}body.ttp .tt td,body.ttp .tt th{font-size:11px}body.ttbw .tt thead th{background:#fff!important;color:#000!important;border:1.5px solid #000}body.ttbw .tt td,body.ttbw .tt .prh,body.ttbw .tt .brh{background:#fff!important;color:#000!important}body.ttbw .tt .br{background:#ddd!important;color:#000!important}}
 </style></head><body>
 <div id="app"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
@@ -443,41 +420,43 @@ async function addGate(){if(!$("v1").value.trim())return bad("Enter the visitor 
 async function outGate(id){const{error}=await sb.from("gate_entries").update({time_out:nowT()}).eq("id",id);if(error)return bad(why(error));toast("Visitor checked out.");gate()}
 /* ---- timetable ---- */
 let TC="All";
-async function timetable(){
- let own=null;
- if(ME.role=="student"){
-  const r=await run(sb.from("students").select("class_no").limit(1));
-  own=r&&r[0]?r[0].class_no:null;
- }
- const[D,P,C]=await Promise.all([
-  run(sb.from("timetable_days").select("*").order("sort")),
-  run(sb.from("timetable_periods").select("*").order("period")),
-  run(sb.from("timetable_cells").select("*").limit(5000))
- ]);
- if(!D||!P)return;
- const cell={};
- (C||[]).forEach(c=>cell[c.class_no+"|"+c.day+"|"+c.period]=c);
- const ed=isStaff(),hd=isHead(),cs=own?[own]:TC=="All"?CL:[+TC];
- const th=p=>`<th><span ${hd?`contenteditable="true" onblur="ttPer(${p.period},'label',this.textContent)"`:""}>${esc(/^P\d+$/i.test(p.label)?"Period "+p.label.slice(1):p.label)}</span><br>${hd?`<div class="tt-time-edit"><input type="time" value="${p.start_time.slice(0,5)}" onchange="ttPer(${p.period},'start_time',this.value)"><input type="time" value="${p.end_time.slice(0,5)}" onchange="ttPer(${p.period},'end_time',this.value)"></div>`:`<small>${p.start_time.slice(0,5)}–${p.end_time.slice(0,5)}</small>`}</th>`;
- const rows=cs.map(c=>D.map(d=>{
-  const cells=P.map(p=>{
-   const x=cell[c+"|"+d.day+"|"+p.period];
-   const v=x?esc(x.subject||"")+(x.teacher_name?" – "+esc(x.teacher_name):""):"";
-   const td=`<td data-period="${esc(/^P\d+$/i.test(p.label)?"Period "+p.label.slice(1):p.label)}" ${ed?`contenteditable="true" onblur="ttCell(${c},'${esc(d.day)}',${p.period},this.textContent)"`:""}>${v||"—"}</td>`;
-   return (p.period==4?'<td class="tt-break" data-period="Break">Break</td>':"")+td;
-  }).join("");
-  return `<tr><td class="tt-class" data-period="Class"><b>Class ${c}</b></td><td class="tt-day" data-period="Day">${esc(d.day)}</td>${cells}</tr>`;
- }).join("")).join("");
- $("main").innerHTML=(own?"":`<div class="row"><select onchange="TC=this.value;timetable()"><option value="All">All classes</option>${CL.map(c=>`<option value="${c}"${TC==c?" selected":""}>Class ${c}</option>`)}</select>${hd?'<button class="b g" onclick="ttDay()">Add day</button>':""}${hd&&!(C||[]).length?'<button class="b" onclick="ttSample()">Fill sample timetable</button>':""}${D.map(d=>`<span class="tag">${esc(d.day)}${hd?` <a href="#" style="color:#fff" onclick="ttDelDay('${esc(d.day)}');return false">✕</a>`:""}</span>`).join(" ")}</div>`)
- +`<p class="tt-note">School time: Monday–Thursday 8:30 am–2:00 pm · Friday 8:30 am–12:30 pm${ed?" · click a period cell to edit (Subject – Teacher)":""}</p>
- <div class="tt-wrap"><table class="tt-table"><thead><tr><th>Class</th><th>Day</th>${P.slice(0,4).map(th).join("")}<th class="tt-break-head">Break</th>${P.slice(4).map(th).join("")}</tr></thead><tbody>${rows}</tbody></table></div>`;
- tl($("main"));
-}
-async function ttCell(c,d,p,t){t=t.trim();if(!t){const{error}=await sb.from("timetable_cells").delete().eq("class_no",c).eq("day",d).eq("period",p);if(error)bad(why(error));return}const i=t.search(/\s[–-]\s/),sub=i<0?t:t.slice(0,i).trim(),tea=i<0?null:t.slice(i).replace(/^\s[–-]\s/,"").trim()||null,{error}=await sb.from("timetable_cells").upsert({class_no:c,day:d,period:p,subject:sub,teacher_name:tea},{onConflict:"class_no,day,period"});if(error)return bad(why(error));toast("Timetable saved.")}
-async function ttPer(p,k,v){v=String(v).trim();if(!v)return;const{error}=await sb.from("timetable_periods").update({[k]:v}).eq("period",p);if(error)return bad(why(error));toast("Period updated.")}
-function ttDay(){formModal("Add a working day",[["d","Day name (e.g. Saturday)"]],{d:""},async r=>{if(!r.d.trim()){bad("Enter the day name.");return false}const{data}=await sb.from("timetable_days").select("sort").order("sort",{ascending:false}).limit(1);const{error}=await sb.from("timetable_days").insert({day:r.d.trim(),sort:((data&&data[0]&&data[0].sort)||0)+1});if(error){bad(error.code=="23505"?"This day already exists.":why(error));return false}toast("Day added.");timetable()})}
-function ttDelDay(d){modal("Remove "+d+" and all its timetable entries?",async()=>{const{error}=await sb.from("timetable_days").delete().eq("day",d);if(error)return bad(why(error));toast("Day removed.");timetable()},"Delete")}
-async function ttSample(){const[D,T1]=await Promise.all([run(sb.from("timetable_days").select("*").order("sort")),run(sb.from("teachers").select("name").order("id"))]);const rows=[];CL.forEach((c,ci)=>(D||[]).forEach((d,di)=>{for(let p=0;p<8;p++)rows.push({class_no:c,day:d.day,period:p,subject:SUB[c][(p+ci+di)%SUB[c].length],teacher_name:T1&&T1.length?T1[(p+ci*2)%T1.length].name:null})}));for(let i=0;i<rows.length;i+=100){const{error}=await sb.from("timetable_cells").upsert(rows.slice(i,i+100),{onConflict:"class_no,day,period"});if(error)return bad(why(error))}toast("Sample timetable filled. Edit any cell.");timetable()}
+let TTc=1,TT=null,TTe=false,TTT=[];
+const tmin=t=>{const[h,m]=String(t||"0:0").split(":");return+h*60+ +m},t12=t=>{const[h,m]=String(t||"0:0").split(":").map(Number);return(h%12||12)+":"+String(m).padStart(2,"0")+(h<12?" AM":" PM")},trg=(a,b)=>t12(a)+" - "+t12(b);
+const ttS=c=>TT.L.filter(x=>x.schedule==c).sort((a,b)=>a.pos-b.pos),ttSch=c=>TT.S.find(x=>x.code==c)||{},ttGet=(d,p)=>TT.C.find(x=>x.class_no==TTc&&x.day==d&&x.pos==p),ttDs=c=>TT.D.filter(d=>d.schedule==c).map(d=>d.day);
+async function timetable(){let own=null;if(ME.role=="student"){const r=await run(sb.from("students").select("class_no").limit(1));own=r&&r[0]?r[0].class_no:null}
+const[S,L,D,C]=await Promise.all([run(sb.from("tt_schedules").select("*")),run(sb.from("tt_slots").select("*").order("pos")),run(sb.from("tt_days").select("*").order("sort")),run(sb.from("tt_cells").select("*").limit(5000))]);if(!S||!L||!D)return;
+if(isHead())TTT=(await run(sb.from("teachers").select("id,name").order("id")))||[];TT={S,L,D,C:C||[],own};if(own)TTc=own;TTe=false;ttDraw()}
+function ttDraw(){const hd=isHead(),days=TT.D;if(!days.length){$("main").innerHTML='<div class="card pad">No timetable has been set up yet.'+(hd?" Add a day in Manage timetable.":"")+"</div>";return}
+const first=ttS(days[0].schedule),rows=Math.max(0,...TT.S.map(s=>ttS(s.code).length)),hours=TT.S.map(s=>{const n=ttDs(s.code).map(d=>d.slice(0,3));return n.length?n.join(", ")+": "+t12(s.opens)+" - "+t12(s.closes):""}).filter(Boolean).join("  |  ");
+const cellSel=(d,r)=>{const x=ttGet(d,r)||{};return`<select onchange="ttPut('${esc(d)}',${r},'subject',this.value)"><option value="">- subject -</option>${(SUB[TTc]||[]).map(s=>`<option${s==x.subject?" selected":""}>${esc(s)}</option>`).join("")}</select><select onchange="ttPut('${esc(d)}',${r},'teacher',this.value)"><option value="">- teacher -</option>${TTT.map(t=>`<option value="${esc(t.id)}"${t.id==x.teacher_id?" selected":""}>${esc(t.name)}</option>`).join("")}</select>`};
+let body="";for(let r=0;r<rows;r++){const h=first[r];body+=`<tr><th class="${h&&h.kind!="period"?"brh":"prh"}">${h?`<b>${esc(h.label)}</b><br><small>${trg(h.start_time,h.end_time)}</small>`:"-"}</th>`+days.map(d=>{const sl=ttS(d.schedule)[r];if(!sl)return'<td class="e"></td>';const df=!h||h.start_time!=sl.start_time||h.end_time!=sl.end_time||h.kind!=sl.kind,tm=df?`<br><small>${trg(sl.start_time,sl.end_time)}</small>`:"";
+if(sl.kind!="period")return`<td class="br ${sl.kind=="long_break"?"lb":"sb"}"><b>${esc(sl.label)}</b>${df?tm:""}</td>`;const x=ttGet(d.day,r);return`<td>${hd&&TTe?cellSel(d.day,r):x&&x.subject?`<b>${esc(x.subject)}</b>${x.teacher_name?`<br><i>${esc(x.teacher_name)}</i>`:""}`:'<span class="mu">-</span>'}${tm}</td>`}).join("")+"</tr>"}
+const kinds=[["period","Period"],["short_break","Short break"],["long_break","Long break"]],panel=hd&&TTe?`<div class="card pad noprint"><h3 class="sec">Manage timetable</h3>${TT.S.map(s=>`<p><b>${esc(s.name)}</b> opens <input type="time" value="${s.opens}" onchange="ttSch('${s.code}').opens=this.value"> closes <input type="time" value="${s.closes}" onchange="ttSch('${s.code}').closes=this.value"></p>${ttS(s.code).map((x,i)=>`<div class="row"><select onchange="ttSl('${s.code}',${i},'kind',this.value)">${kinds.map(k=>`<option value="${k[0]}"${k[0]==x.kind?" selected":""}>${k[1]}</option>`).join("")}</select><input value="${esc(x.label)}" onchange="ttSl('${s.code}',${i},'label',this.value)" style="width:130px"><input type="time" value="${x.start_time}" onchange="ttSl('${s.code}',${i},'start_time',this.value)"><input type="time" value="${x.end_time}" onchange="ttSl('${s.code}',${i},'end_time',this.value)"><button class="b g" onclick="ttMove('${s.code}',${i},-1)" aria-label="Move up">&uarr;</button><button class="b g" onclick="ttMove('${s.code}',${i},1)" aria-label="Move down">&darr;</button><button class="b dg" onclick="ttDelSlot('${s.code}',${i})" aria-label="Remove">&times;</button></div>`).join("")}<div class="row">${kinds.map(k=>`<button class="b g" onclick="ttAdd('${s.code}','${k[0]}')">+ ${k[1]}</button>`).join("")}</div>`).join("")}<p><b>Working days</b></p><div class="row">${days.map(d=>`<span>${esc(d.day)} <select onchange="ttDay('${esc(d.day)}',this.value)">${TT.S.map(s=>`<option value="${s.code}"${s.code==d.schedule?" selected":""}>${esc(s.name)}</option>`).join("")}</select> <button class="b dg" onclick="ttDelDay('${esc(d.day)}')" aria-label="Remove day">&times;</button></span>`).join("")}<input id="tdn" placeholder="New day" style="width:120px"><button class="b g" onclick="ttAddDay()">Add day</button></div></div>`:"";
+const bt=(f,l,d)=>`<button class="b" onclick="${f}">${ic(d)}${l}</button>`,PR='<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/>',DL='<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>';
+$("main").innerHTML=`<div class="ttbar noprint">${TT.own?"":`<select onchange="TTc=+this.value;ttDraw()">${CL.map(c=>`<option value="${c}"${c==TTc?" selected":""}>Class ${c}</option>`).join("")}</select>`}${bt("ttPrint(1)","Print Black &amp; White",PR)}${bt("ttPrint(0)","Print in Colour",PR)}${bt("ttPdf()","Download PDF",DL)}${bt("ttCsv()","Download CSV",DL)}${hd?TTe?'<button class="b" onclick="ttPublish()">Save &amp; publish</button><button class="b dg" onclick="timetable()">Discard changes</button>':'<button class="b g" onclick="TTe=true;ttDraw()">Manage timetable</button>':""}</div>${panel}<div id="ttprint" class="card pad"><div class="tth"><h2>FAIZ ILLAHI ELEMENTARY SCHOOL</h2><b>Weekly Timetable - Class ${TTc}</b><br><small>${hours}</small></div><table class="tt"><thead><tr><th>Period</th>${days.map(d=>`<th>${esc(d.day)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>`;tl($("main"))}
+function ttPut(d,p,f,v){let x=ttGet(d,p);if(!x){x={class_no:TTc,day:d,pos:p,subject:"",teacher_id:"",teacher_name:""};TT.C.push(x)}if(f=="subject")x.subject=v;else{x.teacher_id=v;const t=TTT.find(z=>z.id==v);x.teacher_name=t?t.name:""}if(!x.subject&&!x.teacher_id)TT.C=TT.C.filter(z=>z!==x)}
+function ttSl(c,i,f,v){ttS(c)[i][f]=v;if(f=="kind")ttDraw()}
+function ttMove(c,i,d){const a=ttS(c),j=i+d;if(j<0||j>=a.length)return;const ds=ttDs(c);TT.C.forEach(x=>{if(ds.includes(x.day)){if(x.pos==i)x.pos=j;else if(x.pos==j)x.pos=i}});a[i].pos=j;a[j].pos=i;ttDraw()}
+function ttDelSlot(c,i){const ds=ttDs(c);TT.C=TT.C.filter(x=>!(ds.includes(x.day)&&x.pos==i));TT.C.forEach(x=>{if(ds.includes(x.day)&&x.pos>i)x.pos--});TT.L=TT.L.filter(x=>!(x.schedule==c&&x.pos==i));TT.L.forEach(x=>{if(x.schedule==c&&x.pos>i)x.pos--});ttDraw()}
+function ttAdd(c,k){const a=ttS(c),l=a[a.length-1],st=l?l.end_time:ttSch(c).opens,m=tmin(st)+(k=="period"?40:k=="short_break"?20:30);TT.L.push({schedule:c,pos:a.length,kind:k,label:k=="period"?"Period "+(a.filter(x=>x.kind=="period").length+1):k=="short_break"?"Short Break":"Long Break",start_time:st,end_time:String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")});ttDraw()}
+function ttDay(d,c){TT.D.find(x=>x.day==d).schedule=c;ttDraw()}
+function ttAddDay(){const n=$("tdn").value.trim();if(!n)return bad("Type the day name.");if(TT.D.some(x=>x.day.toLowerCase()==n.toLowerCase()))return bad("That day already exists.");TT.D.push({day:n,sort:Math.max(0,...TT.D.map(x=>x.sort))+1,schedule:TT.S[0].code});ttDraw()}
+function ttDelDay(d){TT.D=TT.D.filter(x=>x.day!=d);TT.C=TT.C.filter(x=>x.day!=d);ttDraw()}
+async function ttPublish(){for(const s of TT.S){if(tmin(s.closes)<=tmin(s.opens))return bad("Closing time must be after opening time ("+s.name+").");for(const x of ttS(s.code))if(tmin(x.end_time)<=tmin(x.start_time))return bad("Check the times of "+x.label+" ("+s.name+").")}
+const p={schedules:TT.S.map(s=>({code:s.code,name:s.name,opens:s.opens,closes:s.closes})),slots:TT.L.map(x=>({schedule:x.schedule,pos:x.pos,kind:x.kind,label:x.label,start_time:x.start_time,end_time:x.end_time})),days:TT.D.map(d=>({day:d.day,sort:d.sort,schedule:d.schedule})),cells:TT.C.filter(x=>x.subject||x.teacher_id).map(x=>({class_no:x.class_no,day:x.day,pos:x.pos,subject:x.subject||null,teacher_id:x.teacher_id||null,teacher_name:x.teacher_name||null}))};
+const{error}=await sb.rpc("publish_timetable",{p});if(error)return bad(why(error));toast("Timetable saved and published.");timetable()}
+const ttOk=()=>TTe?(bad("Save & publish or discard your changes first."),false):true;
+function ttPrint(bw){if(!ttOk())return;document.body.classList.add("ttp");if(bw)document.body.classList.add("ttbw");const f=()=>{document.body.classList.remove("ttp","ttbw");removeEventListener("afterprint",f)};addEventListener("afterprint",f);print()}
+function ttCsv(){if(!ttOk())return;const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"',R=[["Faiz Illahi Elementary School"],["Class "+TTc],...TT.S.map(s=>[s.name+" hours",t12(s.opens)+" - "+t12(s.closes)]),[],["Day","Slot","Type","Start","End","Subject","Teacher"]];TT.D.forEach(d=>ttS(d.schedule).forEach(x=>{const c=x.kind=="period"?ttGet(d.day,x.pos):null;R.push([d.day,x.label,x.kind.replace("_"," "),t12(x.start_time),t12(x.end_time),c?c.subject:"",c?c.teacher_name:""])}));
+const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+R.map(r=>r.map(q).join(",")).join("\r\n")],{type:"text/csv"}));a.download="Timetable_Class_"+TTc+".csv";a.click();URL.revokeObjectURL(a.href)}
+async function ttPdf(){if(!ttOk())return;try{if(!window.jspdf)await new Promise((ok,no)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";s.onload=ok;s.onerror=no;document.head.appendChild(s)})}catch(e){return bad("The PDF library could not load. Check your internet, or use Print and choose Save as PDF.")}
+const doc=new window.jspdf.jsPDF({orientation:"landscape",unit:"mm",format:"a4"}),days=TT.D,first=ttS(days[0].schedule),rows=Math.max(...TT.S.map(s=>ttS(s.code).length)),M=10,c0=36,cw=(297-2*M-c0)/days.length,y0=34,rh=Math.min(20,(200-y0)/(rows+1));
+const box=(x,y,w,h,f,L)=>{doc.setFillColor(...f);doc.setDrawColor(150);doc.rect(x,y,w,h,"FD");const n=L.length,t=y+h/2-(n-1)*2+1;L.forEach((l,i)=>{doc.setFont("helvetica",l.s||"normal");doc.setFontSize(l.z||8.5);doc.setTextColor(...(l.c||[20,20,20]));doc.text(String(doc.splitTextToSize(l.t,w-2)[0]),x+w/2,t+i*3.6,{align:"center"})})};
+doc.setFont("helvetica","bold");doc.setFontSize(16);doc.setTextColor(6,69,47);doc.text("FAIZ ILLAHI ELEMENTARY SCHOOL",148.5,13,{align:"center"});doc.setFontSize(12);doc.text("Weekly Timetable - Class "+TTc,148.5,20,{align:"center"});doc.setFont("helvetica","normal");doc.setFontSize(8.5);doc.setTextColor(60);doc.text(TT.S.map(s=>{const n=ttDs(s.code).map(d=>d.slice(0,3));return n.length?n.join(", ")+": "+t12(s.opens)+" - "+t12(s.closes):""}).filter(Boolean).join("   |   "),148.5,26,{align:"center"});
+const W=[255,255,255];box(M,y0,c0,rh*.6,[7,91,59],[{t:"Period",s:"bold",c:W,z:9}]);days.forEach((d,i)=>box(M+c0+i*cw,y0,cw,rh*.6,[7,91,59],[{t:d.day,s:"bold",c:W,z:9}]));
+for(let r=0;r<rows;r++){const y=y0+rh*.6+r*rh,h=first[r];box(M,y,c0,rh,h&&h.kind!="period"?[255,243,196]:[228,241,232],h?[{t:h.label,s:"bold"},{t:trg(h.start_time,h.end_time),z:7}]:[{t:"-"}]);days.forEach((d,i)=>{const sl=ttS(d.schedule)[r],x=M+c0+i*cw;if(!sl)return box(x,y,cw,rh,[243,243,238],[]);const df=!h||h.start_time!=sl.start_time||h.end_time!=sl.end_time||h.kind!=sl.kind,tm=df?[{t:trg(sl.start_time,sl.end_time),z:7,c:[90,90,90]}]:[];
+if(sl.kind!="period")return box(x,y,cw,rh,sl.kind=="long_break"?[246,217,138]:[255,243,196],[{t:sl.label,s:"bold"},...tm]);const c=ttGet(d.day,r);box(x,y,cw,rh,[255,255,255],c&&c.subject?[{t:c.subject,s:"bold"},...(c.teacher_name?[{t:c.teacher_name,s:"italic",z:7.5,c:[90,90,90]}]:[]),...tm]:[{t:"-"},...tm])})}
+doc.save("Timetable_Class_"+TTc+".pdf")}
 /* ---- reports ---- */
 let RT="students",RC="All",RD=iso();
 const RL={students:"Students list",teachers:"Teachers list",attendance:"Attendance (one day)",results:"Exam results (one class)",free:"Free text books",gate:"Gate entry",leave:"Leave applications"};
