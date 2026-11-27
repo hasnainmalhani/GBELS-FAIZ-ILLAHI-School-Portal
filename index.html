@@ -317,7 +317,16 @@ function resetToday(){modal("Delete all of today’s student attendance records?
 
 /* ===== Batch B: exams, student portal + result card, leave applications ===== */
 Object.assign(TR,{"Exams":["امتحان","امتحانات"],"Student Portal":["شاگرد پورٽل","اسٹوڈنٹ پورٹل"],"Leave Applications":["موڪل جون درخواستون","رخصت کی درخواستیں"],"Subject":["مضمون","مضمون"],"Result card":["نتيجي ڪارڊ","رزلٹ کارڈ"],"Approve":["منظور","منظور"],"Reject":["رد","مسترد"],"Submit application":["درخواست جمع ڪريو","درخواست جمع کریں"],"Cancel leave":["موڪل رد ڪريو","رخصت منسوخ کریں"],"Pending":["زير التوا","زیر التواء"],"Approved":["منظور ٿيل","منظور شدہ"],"Rejected":["رد ٿيل","مسترد"],"Cancelled":["منسوخ","منسوخ"],"Print":["پرنٽ","پرنٹ"],"Attendance record":["حاضري جو رڪارڊ","حاضری کا ریکارڈ"],"Reason":["سبب","وجہ"],"Applied":["درخواست جي تاريخ","درخواست کی تاریخ"],"From":["کان","سے"],"To":["تائين","تک"],"Days":["ڏينهن","دن"],"Sent to":["ڏانهن موڪليل","کو بھیجا گیا"]});
-const SUB={6:["English","Science","Maths","Sindhi","Urdu","S.Study","Islamiat"],9:["English","Biology","Physics","Chemistry","Sindhi","Maths","S.Study"],10:["English","Biology","Physics","Chemistry","Urdu","Maths","Islamiat"]};SUB[7]=SUB[8]=SUB[6];for(let c=1;c<=5;c++)SUB[c]=SUB[6];
+const SUB={
+1:["English","Maths","Sindhi"],
+2:["English","Maths","Sindhi"],
+3:["English","Maths","Sindhi","Urdu","General Knowledge","Islamiat"],
+4:["English","Maths","Sindhi","Urdu","Islamiat","General Science","Social Studies"],
+5:["English","Maths","Sindhi","Urdu","Islamiat","General Science","Social Studies"],
+6:["English","Maths","Sindhi","Urdu","Islamiat","General Science","Social Studies"],
+7:["English","Maths","Sindhi","Urdu","Islamiat","General Science","Social Studies"],
+8:["English","Maths","Sindhi","Urdu","Islamiat","General Science","Social Studies"]
+};;for(let c=1;c<=5;c++)SUB[c]=SUB[6];
 const grade=p=>p>=80?"A+":p>=70?"A":p>=60?"B":p>=50?"C":p>=40?"D":"F",sName=s=>esc(s.name)+" "+esc(s.surname||""),ini=s=>esc((s.name||"?")[0])+esc((s.surname||"")[0]||"");
 const MX=[30,20,50],NM=["Midterm /30","Class performance /20","Final term /50"];
 /* ---- exams ---- */
