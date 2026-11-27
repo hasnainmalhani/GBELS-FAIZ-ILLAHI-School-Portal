@@ -165,6 +165,34 @@ h3.sec{display:flex;align-items:center;gap:10px}h3.sec::after{content:"";flex:1;
 .lg-r form{background:var(--card);padding:30px;border-radius:22px;border:1px solid var(--line);box-shadow:0 20px 56px #06452f26}.lg-l>img{object-position:center 40%}.lg-r h2{font-size:30px}
 .ac i{box-shadow:0 0 0 3px #2F6FA31f}.lk{color:var(--blue)}
 @media print{.dd,.srch,.clk{display:none!important}}
+
+/* Timetable-only layout fixes: fit the full timetable without horizontal scrolling */
+.tt-note{color:var(--mute);font-size:13px;line-height:1.5;margin:10px 0}
+.tt-wrap{width:100%;max-width:100%;overflow:visible!important;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.tt-table{width:100%!important;min-width:0!important;table-layout:fixed;border-collapse:collapse}
+.tt-table th,.tt-table td{min-width:0;padding:7px 4px!important;text-align:center;white-space:normal!important;overflow-wrap:anywhere;word-break:normal;line-height:1.25}
+.tt-table th{font-size:11px;letter-spacing:0;text-transform:none}
+.tt-table td{font-size:12px}
+.tt-table .tt-class{width:7%;font-weight:700}
+.tt-table .tt-day{width:8%;font-weight:600}
+.tt-table .tt-break,.tt-table .tt-break-head{background:var(--sand);color:#034b2c;font-weight:700}
+.tt-time-edit{display:flex;flex-direction:column;gap:3px;margin-top:4px}
+.tt-time-edit input{width:100%!important;min-width:0!important;padding:3px 1px!important;font-size:10px!important;min-height:28px!important}
+.tt-table td[contenteditable="true"]{cursor:text;outline-offset:-2px}
+.tt-table td[contenteditable="true"]:focus{outline:2px solid var(--blue);background:var(--card)}
+@media(max-width:820px){
+ .tt-wrap{overflow:visible!important}
+ .tt-table,.tt-table tbody{display:block;width:100%!important}
+ .tt-table thead{display:none}
+ .tt-table tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:8px;margin:0;border-bottom:1px solid var(--line)}
+ .tt-table td{display:flex;flex-direction:column;justify-content:flex-start;min-height:62px;padding:6px 4px!important;border:1px solid var(--line);border-radius:8px;text-align:center;font-size:11px;overflow-wrap:anywhere}
+ .tt-table td::before{content:attr(data-period);display:block;font-size:9px;font-weight:700;color:var(--mute);margin-bottom:4px}
+ .tt-table .tt-class,.tt-table .tt-day{grid-column:span 2;min-height:38px;justify-content:center;background:var(--bg)}
+ .tt-table .tt-class::before,.tt-table .tt-day::before{margin:0 0 2px}
+ .tt-table .tt-break{background:var(--sand)!important;color:#034b2c}
+ .tt-table th,.tt-table td{white-space:normal!important}
+}
+
 </style></head><body>
 <div id="app"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
@@ -415,10 +443,36 @@ async function addGate(){if(!$("v1").value.trim())return bad("Enter the visitor 
 async function outGate(id){const{error}=await sb.from("gate_entries").update({time_out:nowT()}).eq("id",id);if(error)return bad(why(error));toast("Visitor checked out.");gate()}
 /* ---- timetable ---- */
 let TC="All";
-async function timetable(){let own=null;if(ME.role=="student"){const r=await run(sb.from("students").select("class_no").limit(1));own=r&&r[0]?r[0].class_no:null}
-const[D,P,C]=await Promise.all([run(sb.from("timetable_days").select("*").order("sort")),run(sb.from("timetable_periods").select("*").order("period")),run(sb.from("timetable_cells").select("*").limit(5000))]);if(!D||!P)return;const cell={};(C||[]).forEach(c=>cell[c.class_no+"|"+c.day+"|"+c.period]=c);const ed=isStaff(),hd=isHead(),cs=own?[own]:TC=="All"?CL:[+TC];
-const th=p=>`<th><span ${hd?`contenteditable="true" onblur="ttPer(${p.period},'label',this.textContent)"`:""}>${esc(/^P\d+$/i.test(p.label)?"Period "+p.label.slice(1):p.label)}</span><br>${hd?`<input type="time" value="${p.start_time.slice(0,5)}" style="width:92px" onchange="ttPer(${p.period},'start_time',this.value)"><input type="time" value="${p.end_time.slice(0,5)}" style="width:92px" onchange="ttPer(${p.period},'end_time',this.value)">`:`${p.start_time.slice(0,5)}–${p.end_time.slice(0,5)}`}</th>`;
-$("main").innerHTML=(own?"":`<div class="row"><select onchange="TC=this.value;timetable()"><option value="All">All classes</option>${CL.map(c=>`<option value="${c}"${TC==c?" selected":""}>Class ${c}</option>`)}</select>${hd?'<button class="b g" onclick="ttDay()">Add day</button>':""}${hd&&!(C||[]).length?'<button class="b" onclick="ttSample()">Fill sample timetable</button>':""}${D.map(d=>`<span class="tag">${esc(d.day)}${hd?` <a href="#" style="color:#fff" onclick="ttDelDay('${esc(d.day)}');return false">✕</a>`:""}</span>`).join(" ")}</div>`)+`<p style="color:var(--mute)">School time 8:30 am – 2:00 pm · Break 11:30 – 12:00${ed?" · click a cell to edit (write Subject – Teacher)":""}</p><div class="w card"><table style="min-width:1150px"><thead><tr><th>Class</th><th>Day</th>${P.slice(0,4).map(th).join("")}<th>Break<br>11:30–12:00</th>${P.slice(4).map(th).join("")}</tr></thead><tbody>${cs.map(c=>D.map(d=>`<tr><td><b>${c}</b></td><td>${esc(d.day)}</td>${P.map(p=>{const x=cell[c+"|"+d.day+"|"+p.period],v=x?esc(x.subject||"")+(x.teacher_name?" – "+esc(x.teacher_name):""):"";return(p.period==4?'<td style="background:var(--sand);color:#034b2c">Break</td>':"")+`<td ${ed?`contenteditable="true" onblur="ttCell(${c},'${esc(d.day)}',${p.period},this.textContent)"`:""}>${v}</td>`}).join("")}</tr>`).join("")).join("")}</tbody></table></div>`;tl($("main"))}
+async function timetable(){
+ let own=null;
+ if(ME.role=="student"){
+  const r=await run(sb.from("students").select("class_no").limit(1));
+  own=r&&r[0]?r[0].class_no:null;
+ }
+ const[D,P,C]=await Promise.all([
+  run(sb.from("timetable_days").select("*").order("sort")),
+  run(sb.from("timetable_periods").select("*").order("period")),
+  run(sb.from("timetable_cells").select("*").limit(5000))
+ ]);
+ if(!D||!P)return;
+ const cell={};
+ (C||[]).forEach(c=>cell[c.class_no+"|"+c.day+"|"+c.period]=c);
+ const ed=isStaff(),hd=isHead(),cs=own?[own]:TC=="All"?CL:[+TC];
+ const th=p=>`<th><span ${hd?`contenteditable="true" onblur="ttPer(${p.period},'label',this.textContent)"`:""}>${esc(/^P\d+$/i.test(p.label)?"Period "+p.label.slice(1):p.label)}</span><br>${hd?`<div class="tt-time-edit"><input type="time" value="${p.start_time.slice(0,5)}" onchange="ttPer(${p.period},'start_time',this.value)"><input type="time" value="${p.end_time.slice(0,5)}" onchange="ttPer(${p.period},'end_time',this.value)"></div>`:`<small>${p.start_time.slice(0,5)}–${p.end_time.slice(0,5)}</small>`}</th>`;
+ const rows=cs.map(c=>D.map(d=>{
+  const cells=P.map(p=>{
+   const x=cell[c+"|"+d.day+"|"+p.period];
+   const v=x?esc(x.subject||"")+(x.teacher_name?" – "+esc(x.teacher_name):""):"";
+   const td=`<td data-period="${esc(/^P\d+$/i.test(p.label)?"Period "+p.label.slice(1):p.label)}" ${ed?`contenteditable="true" onblur="ttCell(${c},'${esc(d.day)}',${p.period},this.textContent)"`:""}>${v||"—"}</td>`;
+   return (p.period==4?'<td class="tt-break" data-period="Break">Break</td>':"")+td;
+  }).join("");
+  return `<tr><td class="tt-class" data-period="Class"><b>Class ${c}</b></td><td class="tt-day" data-period="Day">${esc(d.day)}</td>${cells}</tr>`;
+ }).join("")).join("");
+ $("main").innerHTML=(own?"":`<div class="row"><select onchange="TC=this.value;timetable()"><option value="All">All classes</option>${CL.map(c=>`<option value="${c}"${TC==c?" selected":""}>Class ${c}</option>`)}</select>${hd?'<button class="b g" onclick="ttDay()">Add day</button>':""}${hd&&!(C||[]).length?'<button class="b" onclick="ttSample()">Fill sample timetable</button>':""}${D.map(d=>`<span class="tag">${esc(d.day)}${hd?` <a href="#" style="color:#fff" onclick="ttDelDay('${esc(d.day)}');return false">✕</a>`:""}</span>`).join(" ")}</div>`)
+ +`<p class="tt-note">School time: Monday–Thursday 8:30 am–2:00 pm · Friday 8:30 am–12:30 pm${ed?" · click a period cell to edit (Subject – Teacher)":""}</p>
+ <div class="tt-wrap"><table class="tt-table"><thead><tr><th>Class</th><th>Day</th>${P.slice(0,4).map(th).join("")}<th class="tt-break-head">Break</th>${P.slice(4).map(th).join("")}</tr></thead><tbody>${rows}</tbody></table></div>`;
+ tl($("main"));
+}
 async function ttCell(c,d,p,t){t=t.trim();if(!t){const{error}=await sb.from("timetable_cells").delete().eq("class_no",c).eq("day",d).eq("period",p);if(error)bad(why(error));return}const i=t.search(/\s[–-]\s/),sub=i<0?t:t.slice(0,i).trim(),tea=i<0?null:t.slice(i).replace(/^\s[–-]\s/,"").trim()||null,{error}=await sb.from("timetable_cells").upsert({class_no:c,day:d,period:p,subject:sub,teacher_name:tea},{onConflict:"class_no,day,period"});if(error)return bad(why(error));toast("Timetable saved.")}
 async function ttPer(p,k,v){v=String(v).trim();if(!v)return;const{error}=await sb.from("timetable_periods").update({[k]:v}).eq("period",p);if(error)return bad(why(error));toast("Period updated.")}
 function ttDay(){formModal("Add a working day",[["d","Day name (e.g. Saturday)"]],{d:""},async r=>{if(!r.d.trim()){bad("Enter the day name.");return false}const{data}=await sb.from("timetable_days").select("sort").order("sort",{ascending:false}).limit(1);const{error}=await sb.from("timetable_days").insert({day:r.d.trim(),sort:((data&&data[0]&&data[0].sort)||0)+1});if(error){bad(error.code=="23505"?"This day already exists.":why(error));return false}toast("Day added.");timetable()})}
