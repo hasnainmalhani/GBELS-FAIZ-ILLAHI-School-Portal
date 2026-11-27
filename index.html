@@ -159,7 +159,7 @@ if(typeof supabase==="undefined"){document.getElementById("app").innerHTML='<div
 if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost"))window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 const SB_URL="https://yahzjmkwwftyykntesrh.supabase.co",SB_KEY="sb_publishable_HNnnTEhKcy3isWCZKgVqHw_u_nApSPq";
 const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-const $=id=>document.getElementById(id),CL=[1,2,3,4,5,6,7,8],RK=["JST","DT","HST","JEST","SST"];
+const $=id=>document.getElementById(id),CL=[1,2,3,4,5,6,7,8],RK=["JST","DT","PST","HST","JEST","SST"];
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const iso=()=>new Date().toLocaleDateString("en-CA"),fd=s=>s?String(s).split("-").reverse().join("-"):"";
 let ME=null,VIEW="dash",RECOV=false;
